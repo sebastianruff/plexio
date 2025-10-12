@@ -91,14 +91,39 @@ export const getPlexServers = async (
         ? window.env.VITE_LOCAL_DISCOVERY === 'true'
         : DEFAULT_LOCAL_DISCOVERY;
 
+    console.debug('[PlexService] Resolved localDiscovery flag', {
+      configuredValue: window.env?.VITE_LOCAL_DISCOVERY,
+      localDiscovery,
+    });
+
     if (!localDiscovery) {
       servers.forEach((server: any) => {
         if (server.connections && Array.isArray(server.connections)) {
+          console.debug(
+            '[PlexService] Filtering local connections for server',
+            {
+              name: server.name,
+              totalConnections: server.connections.length,
+            },
+          );
+
           server.connections = server.connections.filter(
             (connection: any) => !connection.local,
           );
+
+          console.debug(
+            '[PlexService] Connections after local filter',
+            {
+              name: server.name,
+              remainingConnections: server.connections.length,
+            },
+          );
         }
       });
+    } else {
+      console.debug(
+        '[PlexService] Local discovery enabled; keeping all connections',
+      );
     }
 
     return servers;
