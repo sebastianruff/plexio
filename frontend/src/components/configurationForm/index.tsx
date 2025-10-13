@@ -61,7 +61,10 @@ const ConfigurationForm: FC<Props> = ({ servers }) => {
         setAddonUrl(generatedAddonUrl);
       }
     } else {
-      window.location.href = generatedAddonUrl.replace(/^https?:\/\//, 'stremio://');
+      const stremioUrl = generatedAddonUrl.replace(/^https?:\/\//, 'stremio://');
+      console.log('Original URL:', generatedAddonUrl);
+      console.log('Stremio URL:', stremioUrl);
+      window.location.href = stremioUrl;
     }
   }
 
