@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { encode as base64_encode } from 'js-base64';
 import { useForm } from 'react-hook-form';
@@ -26,6 +26,8 @@ interface Props {
 }
 
 const ConfigurationForm: FC<Props> = ({ servers }) => {
+  const [addonUrl, setAddonUrl] = useState<string | null>(null);
+  
   const form = useForm<ConfigurationFormType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -50,12 +52,16 @@ const ConfigurationForm: FC<Props> = ({ servers }) => {
     );
 
     const encodedConfiguration = base64_encode(JSON.stringify(configuration));
-    const addonUrl = `${window.location.origin}/${uuidv4()}/${encodedConfiguration}/manifest.json`;
+    const generatedAddonUrl = `${window.location.origin}/${uuidv4()}/${encodedConfiguration}/manifest.json`;
 
     if (event.nativeEvent.submitter.name === 'clipboard') {
-      navigator.clipboard.writeText(addonUrl);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(generatedAddonUrl);
+      } else {
+        setAddonUrl(generatedAddonUrl);
+      }
     } else {
-      window.location.href = addonUrl.replace(/https?:\/\//, 'stremio://');
+      window.location.href = generatedAddonUrl.replace(/^https?:\/\//, 'stremio://');
     }
   }
 
@@ -78,6 +84,13 @@ const ConfigurationForm: FC<Props> = ({ servers }) => {
         <IncludeTranscodeOriginalField form={form} />
         <IncludeTranscodeDownFields form={form} />
         <IncludePlexTvField form={form} />
+
+        {addonUrl && (
+          <div className="p-3 bg-muted rounded-md break-all text-sm">
+            <p className="font-semibold mb-2">Addon URL:</p>
+            <p className="select-all">{addonUrl}</p>
+          </div>
+        )}
 
         <div className="flex items-center space-x-1 justify-center p-3">
           <Button className="h-11 w-10 p-2" type="submit" name="clipboard">
