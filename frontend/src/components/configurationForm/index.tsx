@@ -1,7 +1,7 @@
-import { FC, useState } from 'react';
+import { BaseSyntheticEvent, FC, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { encode as base64_encode } from 'js-base64';
-import { useForm } from 'react-hook-form';
+import { SubmitHandler, useForm } from 'react-hook-form';
 import { v4 as uuidv4 } from 'uuid';
 import {
   DiscoveryUrlField,
@@ -20,6 +20,7 @@ import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button.tsx';
 import { Form } from '@/components/ui/form';
 import usePMSSections from '@/hooks/usePMSSections.tsx';
+import { PlexServer } from '@/types/plex';
 
 interface Props {
   servers: PlexServer[];
@@ -39,24 +40,32 @@ const ConfigurationForm: FC<Props> = ({ servers }) => {
   });
 
   const serverName = form.watch('serverName');
-  const server = servers.find((s) => s.name == serverName);
+  const server = servers.find((s) => s.name === serverName);
 
   const discoveryUrl = form.watch('discoveryUrl');
-  const sections = usePMSSections(discoveryUrl, server?.accessToken || null);
+  const sections = usePMSSections(discoveryUrl, server?.accessToken ?? null);
 
-  function onSubmit(configuration: any, event: any) {
+  const onSubmit: SubmitHandler<ConfigurationFormType> = (
+    configuration,
+    event?: BaseSyntheticEvent,
+  ) => {
     configuration.version = __APP_VERSION__;
     configuration.accessToken = server?.accessToken;
-    configuration.sections = configuration.sections.filter((item: any) =>
-      sections.find((s) => s.key === item.key),
+    configuration.sections = configuration.sections.filter((item) =>
+      sections.some((section) => section.key === item.key),
     );
 
     const encodedConfiguration = base64_encode(JSON.stringify(configuration));
     const generatedAddonUrl = `${window.location.origin}/${uuidv4()}/${encodedConfiguration}/manifest.json`;
 
-    if (event.nativeEvent.submitter.name === 'clipboard') {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(generatedAddonUrl);
+    const submitterName =
+      event?.nativeEvent instanceof SubmitEvent
+        ? (event.nativeEvent.submitter as HTMLButtonElement | null)?.name
+        : undefined;
+
+    if (submitterName === 'clipboard') {
+      if (navigator.clipboard?.writeText) {
+        void navigator.clipboard.writeText(generatedAddonUrl);
       } else {
         setAddonUrl(generatedAddonUrl);
       }
@@ -66,12 +75,14 @@ const ConfigurationForm: FC<Props> = ({ servers }) => {
       console.log('Stremio URL:', stremioUrl);
       window.location.href = stremioUrl;
     }
-  }
+  };
 
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={(event) => {
+          void form.handleSubmit(onSubmit)(event);
+        }}
         className="space-y-2 p-2 rounded-lg border"
       >
         <ServerNameField form={form} servers={servers} />
