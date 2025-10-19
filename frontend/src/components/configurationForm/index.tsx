@@ -59,9 +59,7 @@ const ConfigurationForm: FC<Props> = ({ servers }) => {
     const generatedAddonUrl = `${window.location.origin}/${uuidv4()}/${encodedConfiguration}/manifest.json`;
 
     const submitterName =
-      event?.nativeEvent instanceof SubmitEvent
-        ? (event.nativeEvent.submitter as HTMLButtonElement | null)?.name
-        : undefined;
+      (event?.nativeEvent as { submitter?: { name?: string } })?.submitter?.name;
 
     if (submitterName === 'clipboard') {
       if (navigator.clipboard?.writeText) {
