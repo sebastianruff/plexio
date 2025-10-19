@@ -21,10 +21,11 @@ import {
 } from '@/components/ui/select.tsx';
 import { useToast } from '@/hooks/useToast';
 import { isServerAliveRemote } from '@/services/BackendService.tsx';
+import { PlexConnection, PlexServer } from '@/types/plex';
 
 interface Props {
   form: UseFormReturn<ConfigurationFormType>;
-  server: any;
+  server: PlexServer;
 }
 
 export const DiscoveryUrlField: FC<Props> = ({ form, server }) => {
@@ -33,29 +34,31 @@ export const DiscoveryUrlField: FC<Props> = ({ form, server }) => {
   const [testInProgress, setTestInProgress] = useState(false);
   const discoveryUrl = form.watch('discoveryUrl');
 
-  const testUrl = () => {
+  const testUrl = async () => {
+    if (!discoveryUrl) {
+      return;
+    }
+
     setTestInProgress(true);
-    isServerAliveRemote(discoveryUrl, server.accessToken).then((alive) => {
-      setTestInProgress(false);
+    try {
+      const alive = await isServerAliveRemote(discoveryUrl, server.accessToken);
       const ipPort = parseUrlToIpPort(discoveryUrl);
-      if (alive) {
-        toast({
-          title: 'Discovery URL Test Successful!',
-          description: `Plexio backend successfully accessed your server at ${ipPort}.`,
-          variant: 'success',
-          duration: 30 * 1000,
-        });
-      } else {
-        toast({
-          title: 'Discovery URL Test Failed!',
-          description: `Plexio backend could not access your server at ${ipPort}. 
-                        Please try again or select another URL. Ensure your server is accessible publicly, 
+
+      toast({
+        title: alive
+          ? 'Discovery URL Test Successful!'
+          : 'Discovery URL Test Failed!',
+        description: alive
+          ? `Plexio backend successfully accessed your server at ${ipPort}.`
+          : `Plexio backend could not access your server at ${ipPort}.
+                        Please try again or select another URL. Ensure your server is accessible publicly,
                         or consider using Plex Relay if the server is behind a firewall.`,
-          variant: 'destructive',
-          duration: 30 * 1000,
-        });
-      }
-    });
+        variant: alive ? 'success' : 'destructive',
+        duration: 30 * 1000,
+      });
+    } finally {
+      setTestInProgress(false);
+    }
   };
 
   return (
@@ -78,24 +81,24 @@ export const DiscoveryUrlField: FC<Props> = ({ form, server }) => {
               </FormControl>
               {server.connections.length > 0 && (
                 <SelectContent>
-                  {server.connections.map((conn: any, index: number) => (
-                    <SelectItem key={index} value={conn.uri}>
-                      {conn.local && (
+                  {server.connections.map((connection: PlexConnection) => (
+                    <SelectItem key={connection.uri} value={connection.uri}>
+                      {connection.local && (
                         <Badge className="mr-1.5" variant="secondary">
                           local
                         </Badge>
                       )}
-                      {conn.relay && (
+                      {connection.relay && (
                         <Badge className="mr-1.5" variant="secondary">
                           relay
                         </Badge>
                       )}
-                      {!conn.local && !conn.relay && (
+                      {!connection.local && !connection.relay && (
                         <Badge className="mr-1.5" variant="secondary">
                           public
                         </Badge>
                       )}
-                      {`${conn.address}:${conn.port}`}
+                      {`${connection.address}:${connection.port}`}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -105,7 +108,9 @@ export const DiscoveryUrlField: FC<Props> = ({ form, server }) => {
               className="ml-2.5 h-10 w-16"
               type="button"
               disabled={testInProgress || !discoveryUrl}
-              onClick={testUrl}
+              onClick={() => {
+                void testUrl();
+              }}
             >
               {testInProgress ? (
                 <div className="w-5 h-5 rounded-full animate-spin border-t-2" />
