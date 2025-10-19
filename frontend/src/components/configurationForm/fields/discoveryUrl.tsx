@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select.tsx';
 import { useToast } from '@/hooks/useToast';
 import { isServerAliveRemote } from '@/services/BackendService.tsx';
-import { PlexConnection, PlexServer } from '@/types/plex';
+import { PlexServer } from '@/types/plex';
 
 interface Props {
   form: UseFormReturn<ConfigurationFormType>;
