@@ -55,15 +55,7 @@ const toBoolean = (value: unknown): boolean | null => {
   return null;
 };
 
-const toStringOrNull = (value: unknown): string | null => {
-  if (typeof value === 'string') {
-    return value;
-  }
-  if (value === null || value === undefined) {
-    return null;
-  }
-  return null;
-};
+const toStringOrNull = (value: unknown): string | null => (typeof value === 'string' ? value : null);
 
 const toNumberFromUnknown = (value: unknown): number | null => {
   if (typeof value === 'number') {
