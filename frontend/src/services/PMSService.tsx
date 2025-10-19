@@ -75,7 +75,7 @@ export const getSections = async (
       .map((section: PlexSectionResponse) => toPlexSection(section))
       .filter((section): section is PlexSection => section !== null);
   } catch (error) {
-    console.error('Error fetching Plex servers:', error);
+    console.error('Error fetching Plex sections:', error);
     throw error;
   }
 };
