@@ -81,7 +81,7 @@ export const DiscoveryUrlField: FC<Props> = ({ form, server }) => {
               </FormControl>
               {server.connections.length > 0 && (
                 <SelectContent>
-                  {server.connections.map((connection: PlexConnection) => (
+                  {server.connections.map(connection => (
                     <SelectItem key={connection.uri} value={connection.uri}>
                       {connection.local && (
                         <Badge className="mr-1.5" variant="secondary">
