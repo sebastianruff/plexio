@@ -1,18 +1,25 @@
 import axios from 'axios';
 
-export const isServerAliveRemote = async (serverUrl: string, token: string) => {
+interface TestConnectionResponse {
+  success?: boolean;
+}
+
+export const isServerAliveRemote = async (
+  serverUrl: string,
+  token: string,
+): Promise<boolean> => {
   try {
-    const response = await axios.get(
+    const response = await axios.get<TestConnectionResponse>(
       `${window.location.origin}/api/v1/test-connection`,
       {
         timeout: 25000,
         params: {
           url: serverUrl,
-          token: token,
+          token,
         },
       },
     );
-    return response.data?.success;
+    return response.data?.success === true;
   } catch (error) {
     console.error('Error while ping PMS remote:', error);
     return false;
